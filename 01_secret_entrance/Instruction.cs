@@ -8,5 +8,7 @@ namespace _01_secret_entrance
     {
         public int Direction;
         public int Amount;
+
+        public int Delta => Amount * Direction;
     }
 }

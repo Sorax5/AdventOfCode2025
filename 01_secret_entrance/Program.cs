@@ -1,4 +1,5 @@
 ﻿using _01_secret_entrance;
+using System;
 
 List<Instruction> Instructions = [];
 var baseAmount = 50;
@@ -39,17 +40,84 @@ while (!reader.EndOfStream)
 int Normalize(int value, int modulo) => ((value % modulo) + modulo) % modulo;
 
 var passByZero = 0;
-foreach (var instruction in Instructions)
-{
-    var valueBefore = baseAmount;
-    baseAmount = Normalize(baseAmount + instruction.Amount * instruction.Direction, Modulo);
 
-    if (baseAmount == 0)
+var Exact = (int baseAmount, Instruction instruction) =>
+{
+    var value = baseAmount;
+    value = Normalize(value + instruction.Delta, Modulo);
+
+    if (value == 0)
     {
         passByZero++;
     }
 
-    Console.WriteLine($"before was {valueBefore} then add {instruction.Amount * instruction.Direction} to go to {baseAmount}");
+    return value;
+};
+
+int Advance(int start, Instruction instr)
+{
+    var delta = instr.Amount * instr.Direction;
+    if (delta == 0) return start;
+
+    var passes = 0;
+    if (delta > 0)
+    {
+        var total = start + delta;
+        passes = (total - 1) / Modulo; // exclude landing exactly on 0
+    }
+    else
+    {
+        var distance = -delta;
+        if (start == 0)
+        {
+            passes = (distance - 1) / Modulo; // exclude landing exactly on 0
+        }
+        else if (distance > start)
+        {
+            var remaining = distance - start;
+            passes = 1 + (remaining - 1) / Modulo; // exclude landing exactly on 0
+        }
+    }
+
+    passByZero += passes;
+    return Normalize(start + delta, Modulo);
+}
+
+var EachTick = (int start, Instruction instruction) =>
+{
+    if (instruction.Delta == 0)
+    {
+        return start;
+    }
+
+    var passes = 0;
+    if (instruction.Delta > 0)
+    {
+        var total = start + instruction.Delta;
+        passes = (total - 1) / Modulo; // exclude landing exactly on 0
+    }
+    else
+    {
+        var distance = -instruction.Delta;
+        if (start == 0)
+        {
+            passes = (distance - 1) / Modulo; // exclude landing exactly on 0
+        }
+        else if (distance > start)
+        {
+            var remaining = distance - start;
+            passes = 1 + (remaining - 1) / Modulo; // exclude landing exactly on 0
+        }
+    }
+
+    passByZero += passes;
+    return Normalize(start + instruction.Delta, Modulo);
+};
+
+
+foreach (var instruction in Instructions)
+{
+    baseAmount = EachTick(baseAmount, instruction);
 }
 
 Console.WriteLine($"number {baseAmount} with {passByZero}");
